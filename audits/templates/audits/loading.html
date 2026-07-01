@@ -1,0 +1,36 @@
+<!-- audits/templates/audits/loading.html -->
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-20 text-center">
+    <h1 class="text-2xl font-semibold mb-4">Auditing {{ audit.url }}</h1>
+    <div class="animate-pulse text-gray-500" id="status-text">Status: {{ audit.status }}...</div>
+
+    <div class="mt-6 flex justify-center">
+        <div class="h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+</div>
+
+<script>
+    const auditId = "{{ audit.id }}";
+    const statusUrl = "{% url 'audits:status' audit.id %}";
+
+    async function pollStatus() {
+        const res = await fetch(statusUrl);
+        const data = await res.json();
+
+        document.getElementById("status-text").textContent = `Status: ${data.status}...`;
+
+        if (data.status === "completed") {
+            window.location.href = data.redirect_url;
+        } else if (data.status === "failed") {
+            document.getElementById("status-text").textContent =
+                `Audit failed: ${data.error_message}`;
+        } else {
+            setTimeout(pollStatus, 2000); // poll again in 2 seconds
+        }
+    }
+
+    pollStatus();
+</script>
+{% endblock %}
