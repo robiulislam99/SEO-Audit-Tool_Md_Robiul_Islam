@@ -1,0 +1,31 @@
+<!-- core/templates/core/home.html -->
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto text-center mt-10">
+    <h1 class="text-3xl font-bold text-gray-900 mb-3">Check your website's SEO</h1>
+    <p class="text-gray-500 mb-8">Enter a URL and get an instant, actionable SEO report.</p>
+
+    <form method="POST" action="{% url 'audits:submit' %}" class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-left">
+        {% csrf_token %}
+
+        <label for="{{ form.url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Website URL
+        </label>
+        {{ form.url }}
+        {% if form.url.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ form.url.errors.0 }}</p>
+        {% endif %}
+
+        <label for="{{ form.target_keyword.id_for_label }}" class="block text-sm font-medium text-gray-700 mt-4 mb-1">
+            Target keyword <span class="text-gray-400">(optional)</span>
+        </label>
+        {{ form.target_keyword }}
+
+        <button type="submit"
+            class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors">
+            Run Audit
+        </button>
+    </form>
+</div>
+{% endblock %}
