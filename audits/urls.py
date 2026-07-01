@@ -6,8 +6,13 @@ from . import views
 app_name = "audits"
 
 urlpatterns = [
+    # existing server-rendered flow (keep for backward compatibility / no-JS fallback)
     path("submit/", views.submit_audit, name="submit"),
     path("<int:audit_id>/loading/", views.loading, name="loading"),
-    path("<int:audit_id>/status/", views.check_status, name="status"),
     path("<int:audit_id>/report/", views.report, name="report"),
+
+    # JSON API for the fetch-based frontend
+    path("api/submit/", views.submit_audit_api, name="api_submit"),
+    path("api/<int:audit_id>/status/", views.check_status, name="status"),
+    path("api/<int:audit_id>/report/", views.report_api, name="api_report"),
 ]

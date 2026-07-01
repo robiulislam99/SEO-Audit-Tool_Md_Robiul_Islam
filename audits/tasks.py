@@ -51,8 +51,6 @@ def run_audit(audit_id: int, target_keyword: str = None):
         audit.mark_completed(score=analysis["score"])
 
     except PageScrapeError as e:
-        audit.mark_failed(str(e))
+        audit.mark_failed(e.message, error_type=e.error_type)
     except Exception as e:
-        # Catch-all so a weird/unexpected error doesn't leave the audit
-        # stuck in "running" forever
-        audit.mark_failed(f"Unexpected error: {str(e)}")
+        audit.mark_failed(f"Unexpected error: {str(e)}", error_type="unknown")

@@ -41,6 +41,12 @@ class Audit(models.Model):
         blank=True,
         help_text="Populated only if status is 'failed' — stores what went wrong"
     )
+    error_type = models.CharField(
+        max_length=30,
+        null=True,
+        blank=True,
+        help_text="Machine-readable error category, e.g. 'timeout', 'dns_error'"
+    )
 
     created_at = models.DateTimeField(
         default=timezone.now,
@@ -68,10 +74,10 @@ class Audit(models.Model):
         self.completed_at = timezone.now()
         self.save()
 
-    def mark_failed(self, error_message):
-        """Convenience method to mark an audit as failed."""
+    def mark_failed(self, error_message, error_type="unknown"):
         self.status = self.Status.FAILED
         self.error_message = error_message
+        self.error_type = error_type
         self.completed_at = timezone.now()
         self.save()
 
