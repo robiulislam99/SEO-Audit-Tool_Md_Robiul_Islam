@@ -87,3 +87,66 @@ def report(request, audit_id):
         "failed_results": results.filter(passed=False),
     }
     return render(request, "audits/report.html", context)
+
+# audits/views.py — add these two functions (keep your existing views too)
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+import json
+
+
+@require_http_methods(["POST"])
+def submit_audit_api(request):
+    """
+    JSON version of submit_audit(). Accepts a URL, creates an Audit,
+    queues the background job, and returns the audit_id immediately —
+    no redirect, no page reload.
+    """
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+    url = data.get("url", "").strip()
+    target_keyword = data.get("target_keyword", "").strip() or None
+
+    if not url:
+        return JsonResponse({"error": "URL is required"}, status=400)
+
+    form = AuditSubmitForm({"url": url, "target_keyword": target_keyword or ""})
+    if not form.is_valid():
+        return JsonResponse({"error": form.errors.get("url", ["Invalid URL"])[0]}, status=400)
+
+    audit = Audit.objects.create(url=url, status=Audit.Status.PENDING)
+    async_task(run_audit, audit.id, target_keyword)
+
+    return JsonResponse({"audit_id": audit.id, "status": audit.status})
+
+
+def report_api(request, audit_id):
+    """
+    Returns the full audit report as JSON — score, all check results,
+    grouped by category. Used by the frontend once status becomes 'completed'.
+    """
+    audit = get_object_or_404(Audit, id=audit_id)
+
+    if audit.status != Audit.Status.COMPLETED:
+        return JsonResponse({"error": "Audit not yet completed", "status": audit.status}, status=409)
+
+    results = audit.results.all()
+
+    return JsonResponse({
+        "audit_id": audit.id,
+        "url": audit.url,
+        "score": audit.score,
+        "completed_at": audit.completed_at.strftime("%b %d, %Y — %H:%M"),
+        "results": [
+            {
+                "check_name": r.check_name,
+                "category": r.category,
+                "passed": r.passed,
+                "message": r.message,
+            }
+            for r in results
+        ],
+    })
