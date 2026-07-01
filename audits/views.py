@@ -53,16 +53,13 @@ def loading(request, audit_id):
 
 
 def check_status(request, audit_id):
-    """
-    JSON endpoint polled by the loading page's JavaScript.
-    Returns the current status so the frontend knows when to redirect.
-    """
     audit = get_object_or_404(Audit, id=audit_id)
 
     return JsonResponse({
         "status": audit.status,
         "score": audit.score,
         "error_message": audit.error_message,
+        "error_type": audit.error_type,
         "redirect_url": (
             f"/audits/{audit.id}/report/"
             if audit.status == Audit.Status.COMPLETED

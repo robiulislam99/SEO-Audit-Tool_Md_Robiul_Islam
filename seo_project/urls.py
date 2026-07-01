@@ -17,12 +17,13 @@ Including another URLconf
 # seo_project/urls.py
 
 from django.contrib import admin
-from django.urls import path, include
-from core.views import home  # or import from audits.views if you kept it there
+from django.urls import include, path
+
+from audits.views import home
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", home, name="home"),
     path("audits/", include("audits.urls")),
 ]
-]
+

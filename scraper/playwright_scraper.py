@@ -6,11 +6,17 @@ Reusable Playwright-based scraper for the SEO Audit Tool.
 Extracts: title, meta description, headings (H1/H2), images (with alt text),
 and links (internal/external) from a given URL.
 
-Usage:
-    from scraper.playwright_scraper import scrape_page
+Errors are classified into an `error_type` so the frontend can show
+tailored, user-friendly messages instead of a generic failure.
 
-    data = scrape_page("https://example.com")
-    print(data["title"])
+Usage:
+    from scraper.playwright_scraper import scrape_page, PageScrapeError
+
+    try:
+        data = scrape_page("https://example.com")
+        print(data["title"])
+    except PageScrapeError as e:
+        print(e.error_type, e.message)
 """
 
 from urllib.parse import urlparse
@@ -18,8 +24,24 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 
 
 class PageScrapeError(Exception):
-    """Raised when a page cannot be loaded or scraped."""
-    pass
+    """
+    Raised when a page cannot be loaded or scraped.
+
+    error_type is a machine-readable category the frontend can key off of
+    to show a tailored message/icon, instead of one generic error string.
+
+    Possible values:
+        "timeout"             - page took too long to respond
+        "dns_error"           - domain could not be resolved (typo, doesn't exist)
+        "connection_refused"  - site is down or actively refusing connections
+        "ssl_error"           - certificate/HTTPS problem
+        "invalid_url"         - malformed URL, never reached the network
+        "unknown"             - anything else / unexpected
+    """
+    def __init__(self, message, error_type="unknown"):
+        self.message = message
+        self.error_type = error_type
+        super().__init__(message)
 
 
 def scrape_page(url: str, timeout: int = 15000, headless: bool = True) -> dict:
@@ -50,6 +72,7 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True) -> dict:
 
     Raises:
         PageScrapeError: if the page fails to load or times out.
+                          Check e.error_type for the specific category.
     """
 
     result = {
@@ -75,7 +98,10 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True) -> dict:
             response = page.goto(url, timeout=timeout, wait_until="domcontentloaded")
 
             if response is None:
-                raise PageScrapeError(f"No response received from {url}")
+                raise PageScrapeError(
+                    "The site didn't send back any response.",
+                    error_type="connection_refused"
+                )
 
             result["status_code"] = response.status
             timing = page.evaluate(
@@ -115,7 +141,7 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True) -> dict:
                 if not href or href.startswith(("#", "mailto:", "tel:", "javascript:")):
                     continue
 
-                # Resolve relative URLs against the page
+                # Resolve relative URLs against the page (browser does the join for us)
                 full_url = page.evaluate("(el) => el.href", link)
 
                 if full_url in seen_links:
@@ -129,9 +155,45 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True) -> dict:
                     result["links"]["external"].append(full_url)
 
         except PlaywrightTimeoutError:
-            raise PageScrapeError(f"Timed out while loading {url}")
+            raise PageScrapeError(
+                f"The site took too long to respond (over {timeout // 1000} seconds). "
+                f"It may be slow, offline, or blocking automated visitors.",
+                error_type="timeout"
+            )
+
+        except PageScrapeError:
+            # Already classified above (e.g. the "no response" case) — just re-raise as-is
+            raise
+
         except Exception as e:
-            raise PageScrapeError(f"Failed to scrape {url}: {str(e)}")
+            error_str = str(e).lower()
+
+            if "err_name_not_resolved" in error_str or "dns" in error_str:
+                raise PageScrapeError(
+                    "We couldn't find that website. Double-check the URL is spelled correctly.",
+                    error_type="dns_error"
+                )
+            elif "err_connection_refused" in error_str:
+                raise PageScrapeError(
+                    "The site refused the connection. It may be down or blocking automated tools.",
+                    error_type="connection_refused"
+                )
+            elif "net::err_cert" in error_str or "ssl" in error_str:
+                raise PageScrapeError(
+                    "This site has an SSL/certificate problem, so we couldn't load it securely.",
+                    error_type="ssl_error"
+                )
+            elif "invalid url" in error_str or "err_invalid_url" in error_str:
+                raise PageScrapeError(
+                    "That doesn't look like a valid URL.",
+                    error_type="invalid_url"
+                )
+            else:
+                raise PageScrapeError(
+                    "Something went wrong while loading this page.",
+                    error_type="unknown"
+                )
+
         finally:
             browser.close()
 
