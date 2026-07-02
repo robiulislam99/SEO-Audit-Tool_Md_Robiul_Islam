@@ -40,7 +40,7 @@ def check_title(page_data):
                         affected_element="<title>",
                         recommendation="Add a unique, descriptive <title> tag between 50-60 characters.")
 
-    if length < 30:
+    if length < 50:
         return _result("title_tag", "on_page", "warning", 6,
                         f"Title is short ({length} chars).",
                         affected_element=f"<title>{title}</title>",
@@ -65,7 +65,7 @@ def check_meta_description(page_data):
                         affected_element='<meta name="description">',
                         recommendation="Add a meta description of 150-160 characters summarizing the page.")
 
-    if length < 120:
+    if length < 150:
         return _result("meta_description", "on_page", "warning", 6,
                         f"Meta description is short ({length} chars).",
                         affected_element=f'<meta name="description" content="{desc[:60]}...">',
@@ -78,6 +78,64 @@ def check_meta_description(page_data):
                         recommendation="Shorten the description to under 160 characters.")
 
     return _result("meta_description", "on_page", "pass", 10, f"Meta description length is good ({length} chars).")
+
+
+def check_image_optimization(page_data):
+    images = page_data.get("images", [])
+
+    if not images:
+        return _result("image_optimization", "technical", "pass", 0, "No images found on this page.")
+
+    missing_alt = [img for img in images if not img.get("alt") or not img["alt"].strip()]
+    large_images = []
+
+    for img in images:
+        natural_width = img.get("natural_width") or 0
+        natural_height = img.get("natural_height") or 0
+        rendered_width = img.get("client_width") or 0
+        rendered_height = img.get("client_height") or 0
+
+        if (
+            natural_width >= 1600
+            or natural_height >= 1600
+            or (natural_width * natural_height) >= 2_000_000
+            or (rendered_width * rendered_height) >= 900_000
+        ):
+            large_images.append(img)
+
+    if not missing_alt and not large_images:
+        return _result("image_optimization", "technical", "pass", 8,
+                        f"All {len(images)} image(s) have alt text and no unusually large images were detected.")
+
+    issues = []
+    if missing_alt:
+        issues.append(f"{len(missing_alt)} missing alt text")
+    if large_images:
+        issues.append(f"{len(large_images)} large image(s)")
+
+    example = large_images[0] if large_images else missing_alt[0]
+    affected = example.get("src", "unknown")
+    if example.get("natural_width") and example.get("natural_height"):
+        affected = f'{affected} ({example["natural_width"]}x{example["natural_height"]})'
+
+    severity = "fail" if large_images and len(large_images) > 1 else "warning"
+    weight = 8 if severity == "fail" else 5
+
+    recommendation_parts = []
+    if missing_alt:
+        recommendation_parts.append("Add descriptive alt text to every image.")
+    if large_images:
+        recommendation_parts.append("Resize and compress oversized images before publishing.")
+
+    return _result(
+        "image_optimization",
+        "technical",
+        severity,
+        weight,
+        f"Image optimization issues detected: {', '.join(issues)}.",
+        affected_element=affected,
+        recommendation=" ".join(recommendation_parts),
+    )
 
 
 def check_heading_structure(page_data):
@@ -335,6 +393,7 @@ def analyze_seo(page_data, target_keyword=None):
         check_meta_description(page_data),
         check_heading_structure(page_data),
         check_image_alt_text(page_data),
+        check_image_optimization(page_data),
         check_keyword_usage(page_data, target_keyword),
         check_internal_links(page_data),
         check_canonical_url(page_data),

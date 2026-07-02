@@ -7,7 +7,7 @@ Extracts everything needed for the full professional-level audit:
   - Standard on-page data: title, meta description, headings, images, links
   - Technical signals: canonical URL, robots meta/header, Open Graph, Twitter Card, structured data
   - Content: full visible body text, paragraph text (for keyword/readability analysis)
-  - Performance: page load time, DOMContentLoaded time, approximate total page size
+    - Performance: page load time, DOMContentLoaded time, request count, approximate total page size
   - Mobile: viewport meta tag, horizontal-scroll check at a mobile viewport width
   - Security: HTTPS status (via final_url), mixed-content (http:// resources on an https:// page)
 
@@ -116,7 +116,14 @@ def _extract_page_data(page, response, url):
         src = img.get_attribute("src")
         alt = img.get_attribute("alt")
         if src:
-            result["images"].append({"src": src, "alt": alt})
+            result["images"].append({
+                "src": src,
+                "alt": alt,
+                "natural_width": img.evaluate("el => el.naturalWidth || 0"),
+                "natural_height": img.evaluate("el => el.naturalHeight || 0"),
+                "client_width": img.evaluate("el => el.clientWidth || 0"),
+                "client_height": img.evaluate("el => el.clientHeight || 0"),
+            })
 
     # --- Links (internal/external split + anchor text for quality checks) ---
     base_domain = urlparse(result["final_url"]).netloc
@@ -267,6 +274,7 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True,
         "links_with_text": [],
         "load_time_ms": None,
         "dom_content_loaded_ms": None,
+        "request_count": None,
         "page_size_bytes": None,
         "canonical_url": None,
         "robots_meta": None,
@@ -286,6 +294,13 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True,
             user_agent="Mozilla/5.0 (compatible; SEOAuditBot/1.0; +https://example.com/bot)"
         )
         page = context.new_page()
+        request_count = 0
+
+        def count_request(_request):
+            nonlocal request_count
+            request_count += 1
+
+        page.on("request", count_request)
 
         try:
             response = page.goto(url, timeout=timeout, wait_until="domcontentloaded")
@@ -298,6 +313,7 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True,
 
             extracted = _extract_page_data(page, response, url)
             result.update(extracted)
+            result["request_count"] = request_count if request_count > 0 else None
 
         except PlaywrightTimeoutError:
             raise PageScrapeError(

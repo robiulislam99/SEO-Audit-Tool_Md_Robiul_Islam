@@ -20,7 +20,7 @@ from datetime import datetime, timezone as dt_timezone
 
 from .checks import (
     check_title, check_meta_description, check_heading_structure,
-    check_image_alt_text, check_internal_links, check_canonical_url,
+    check_image_alt_text, check_image_optimization, check_internal_links, check_canonical_url,
     check_robots_meta, check_open_graph, check_twitter_card, check_structured_data,
 )
 from .keyword_analysis import analyze_keywords
@@ -118,6 +118,25 @@ def check_keyword_density(keyword_result: dict) -> dict:
 
     return _category_check("keyword_density", "content_seo", "pass", 8,
                             f'Healthy keyword density ({density}%) and present in all key locations.')
+
+
+def summarize_links(link_result: dict) -> dict:
+    internal_count = link_result["internal_count"]
+    external_count = link_result["external_count"]
+    total = internal_count + external_count
+    internal_ratio = round((internal_count / total) * 100, 1) if total else 0.0
+    external_ratio = round((external_count / total) * 100, 1) if total else 0.0
+
+    return {
+        "internal_count": internal_count,
+        "external_count": external_count,
+        "total_links": total,
+        "internal_ratio": internal_ratio,
+        "external_ratio": external_ratio,
+        "broken_links": link_result["broken_links"],
+        "anchor_text_issues": link_result["anchor_text_issues"],
+        "links_checked_for_broken": link_result["links_checked_for_broken"],
+    }
 
 
 def check_broken_links_status(link_result: dict) -> dict:
@@ -333,6 +352,7 @@ def build_seo_report(page_data: dict, target_keyword: str = None,
         _apply_category_override(check_meta_description(page_data)),
         _apply_category_override(check_heading_structure(page_data)),
         _apply_category_override(check_image_alt_text(page_data)),
+        _apply_category_override(check_image_optimization(page_data)),
         _apply_category_override(check_internal_links(page_data)),
         _apply_category_override(check_canonical_url(page_data)),
         _apply_category_override(check_robots_meta(page_data)),
@@ -364,22 +384,202 @@ def build_seo_report(page_data: dict, target_keyword: str = None,
         for c in all_checks if c["severity"] != "pass" and not c.get("skipped")
     ]
 
+    top_keywords = keyword_result.get("top_keywords", [])
+    target_keyword_analysis = keyword_result.get("target_keyword_analysis")
+
+    content_summary = {
+        "word_count": content_result.get("word_count"),
+        "readability_score": content_result.get("readability_score"),
+        "readability_label": content_result.get("readability_label"),
+        "top_keywords": top_keywords,
+        "target_keyword_analysis": target_keyword_analysis,
+    }
+
+    meta_issues = [
+        {
+            "check_name": c["check_name"],
+            "severity": c["severity"],
+            "message": c["message"],
+            "recommendation": c.get("recommendation"),
+            "affected_element": c.get("affected_element"),
+        }
+        for c in all_checks
+        if c["category"] == "technical_seo" and c["severity"] != "pass" and not c.get("skipped")
+    ]
+    content_issues = [
+        {
+            "check_name": c["check_name"],
+            "severity": c["severity"],
+            "message": c["message"],
+            "recommendation": c.get("recommendation"),
+            "affected_element": c.get("affected_element"),
+        }
+        for c in all_checks
+        if c["category"] == "content_seo" and c["severity"] != "pass" and not c.get("skipped")
+    ]
+    performance_issues = [
+        {
+            "check_name": c["check_name"],
+            "severity": c["severity"],
+            "message": c["message"],
+            "recommendation": c.get("recommendation"),
+            "affected_element": c.get("affected_element"),
+        }
+        for c in all_checks
+        if c["category"] == "performance" and c["severity"] != "pass" and not c.get("skipped")
+    ]
+
+    issue_groups = {
+        "meta": meta_issues,
+        "content": content_issues,
+        "performance": performance_issues,
+    }
+
+    section_scores = {
+        "meta": {
+            "label": "Meta",
+            "score": scoring["category_scores"]["technical_seo"]["score"],
+            "checks_passed": scoring["category_scores"]["technical_seo"]["checks_passed"],
+            "checks_total": scoring["category_scores"]["technical_seo"]["checks_total"],
+            "issues": meta_issues,
+        },
+        "content": {
+            "label": "Content",
+            "score": scoring["category_scores"]["content_seo"]["score"],
+            "checks_passed": scoring["category_scores"]["content_seo"]["checks_passed"],
+            "checks_total": scoring["category_scores"]["content_seo"]["checks_total"],
+            "issues": content_issues,
+        },
+        "performance": {
+            "label": "Performance",
+            "score": scoring["category_scores"]["performance"]["score"],
+            "checks_passed": scoring["category_scores"]["performance"]["checks_passed"],
+            "checks_total": scoring["category_scores"]["performance"]["checks_total"],
+            "issues": performance_issues,
+        },
+    }
+
+    issue_count = len(meta_issues) + len(content_issues) + len(performance_issues)
+
+    frontend_friendly = {
+        "title": "SEO Audit Report",
+        "url": page_data.get("final_url") or page_data.get("url"),
+        "summary": {
+            "overall_score": scoring["overall_score"],
+            "score_label": (
+                "Strong" if scoring["overall_score"] >= 80
+                else "Needs improvement" if scoring["overall_score"] >= 50
+                else "Poor"
+            ),
+            "completed_at": datetime.now(dt_timezone.utc).strftime("%b %d, %Y — %H:%M UTC"),
+            "issue_count": issue_count,
+        },
+        "cards": [
+            {
+                "title": "Overall score",
+                "value": scoring["overall_score"],
+                "type": "score",
+                "tone": (
+                    "success" if scoring["overall_score"] >= 80
+                    else "warning" if scoring["overall_score"] >= 50
+                    else "danger"
+                ),
+            },
+            {
+                "title": "Meta",
+                "value": section_scores["meta"]["score"],
+                "type": "score",
+                "tone": "neutral",
+            },
+            {
+                "title": "Content",
+                "value": section_scores["content"]["score"],
+                "type": "score",
+                "tone": "neutral",
+            },
+            {
+                "title": "Performance",
+                "value": section_scores["performance"]["score"],
+                "type": "score",
+                "tone": "neutral",
+            },
+        ],
+        "sections": [
+            {
+                "key": "meta",
+                "title": "Meta",
+                "score": section_scores["meta"]["score"],
+                "checks": [c for c in all_checks if c["category"] == "technical_seo"],
+                "issues": meta_issues,
+            },
+            {
+                "key": "content",
+                "title": "Content",
+                "score": section_scores["content"]["score"],
+                "checks": [c for c in all_checks if c["category"] == "content_seo"],
+                "issues": content_issues,
+            },
+            {
+                "key": "performance",
+                "title": "Performance",
+                "score": section_scores["performance"]["score"],
+                "checks": [c for c in all_checks if c["category"] == "performance"],
+                "issues": performance_issues,
+            },
+        ],
+        "issue_groups": issue_groups,
+        "suggestions": suggestions,
+    }
+
+    sections = {
+        "meta": {
+            "score": section_scores["meta"]["score"],
+            "issues": meta_issues,
+        },
+        "content": {
+            "score": section_scores["content"]["score"],
+            "issues": content_issues,
+        },
+        "performance": {
+            "score": section_scores["performance"]["score"],
+            "issues": performance_issues,
+        },
+    }
+
     return {
         "url": page_data.get("url"),
         "final_url": page_data.get("final_url"),
         "scanned_at": datetime.now(dt_timezone.utc).isoformat(),
         "overall_score": scoring["overall_score"],
         "category_scores": scoring["category_scores"],
+        "sections": sections,
+        "section_scores": section_scores,
+        "issue_groups": issue_groups,
+        "issue_count": issue_count,
         "checks": all_checks,
         "suggestions": suggestions,
         "keyword_analysis": keyword_result,
-        "content_quality": content_result,
-        "link_analysis": link_result,
+        "content_quality": content_summary,
+        "link_analysis": summarize_links(link_result),
+        "image_optimization": {
+            "missing_alt_images": [img for img in page_data.get("images", []) if not img.get("alt") or not img["alt"].strip()],
+            "large_images": [
+                img for img in page_data.get("images", [])
+                if (
+                    (img.get("natural_width") or 0) >= 1600
+                    or (img.get("natural_height") or 0) >= 1600
+                    or ((img.get("natural_width") or 0) * (img.get("natural_height") or 0)) >= 2_000_000
+                    or ((img.get("client_width") or 0) * (img.get("client_height") or 0)) >= 900_000
+                )
+            ],
+        },
         "mobile_friendliness": mobile_result,
         "security": security_result,
         "performance": {
             "load_time_ms": page_data.get("load_time_ms"),
             "dom_content_loaded_ms": page_data.get("dom_content_loaded_ms"),
+            "request_count": page_data.get("request_count"),
             "page_size_bytes": page_data.get("page_size_bytes"),
         },
+        "frontend_friendly": frontend_friendly,
     }
