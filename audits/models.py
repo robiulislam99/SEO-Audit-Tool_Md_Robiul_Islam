@@ -90,6 +90,11 @@ class Audit(models.Model):
 
     class Meta:
         ordering = ['-created_at']  # newest audits first
+        indexes = [
+            models.Index(fields=['-created_at'], name='audit_created_desc_idx'),
+            models.Index(fields=['-score'], name='audit_score_desc_idx'),
+            models.Index(fields=['url'], name='audit_url_idx'),
+        ]
         verbose_name = "Audit"
         verbose_name_plural = "Audits"
 

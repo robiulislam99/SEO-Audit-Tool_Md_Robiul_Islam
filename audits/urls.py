@@ -8,6 +8,8 @@ app_name = "audits"
 urlpatterns = [
     # existing server-rendered flow (keep for backward compatibility / no-JS fallback)
     path("submit/", views.submit_audit, name="submit"),
+    path("history/", views.history, name="history"),
+    path("history/<int:audit_id>/", views.history_report, name="history_report"),
     path("<int:audit_id>/loading/", views.loading, name="loading"),
     path("<int:audit_id>/report/", views.report, name="report"),
 

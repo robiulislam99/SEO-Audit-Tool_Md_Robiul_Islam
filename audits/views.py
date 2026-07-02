@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
+from django.db.models import F
 
 from .forms import AuditSubmitForm
 from .models import Audit, AuditResult
@@ -20,6 +21,21 @@ def loading(request, audit_id):
 def report(request, audit_id):
     audit = get_object_or_404(Audit, id=audit_id)
     results = audit.results.all()
+    report_data = audit.full_report or {}
+    frontend_report = report_data.get("frontend_friendly") or {
+        "title": "SEO Audit Report",
+        "url": audit.url,
+        "summary": {
+            "overall_score": audit.score,
+            "score_label": "Strong" if (audit.score or 0) >= 80 else "Needs improvement" if (audit.score or 0) >= 50 else "Poor",
+            "completed_at": audit.completed_at.strftime("%b %d, %Y — %H:%M UTC") if audit.completed_at else None,
+            "issue_count": results.exclude(passed=True).count(),
+        },
+        "cards": [],
+        "sections": [],
+        "issue_groups": {},
+        "suggestions": report_data.get("suggestions", []),
+    }
     return render(
         request,
         "audits/report.html",
@@ -28,8 +44,33 @@ def report(request, audit_id):
             "results": results,
             "passed_results": results.filter(passed=True),
             "failed_results": results.filter(passed=False),
+            "report": frontend_report,
         },
     )
+
+
+@require_http_methods(["GET"])
+def history(request):
+    sort = request.GET.get("sort", "date")
+    if sort == "score":
+        audits = Audit.objects.order_by(F("score").desc(nulls_last=True), "-created_at")
+    else:
+        sort = "date"
+        audits = Audit.objects.order_by("-created_at")
+
+    return render(
+        request,
+        "audits/history.html",
+        {
+            "audits": audits,
+            "sort": sort,
+        },
+    )
+
+
+@require_http_methods(["GET"])
+def history_report(request, audit_id):
+    return report(request, audit_id)
 
 
 @require_http_methods(["POST"])
