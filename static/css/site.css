@@ -1,0 +1,38 @@
+:root {
+    --ink: #0f172a;
+    --muted: #64748b;
+    --line: rgba(148, 163, 184, 0.24);
+    --panel: rgba(255, 255, 255, 0.78);
+    --accent: #0f766e;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Inter", sans-serif;
+    color: var(--ink);
+    background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.13), transparent 30%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.14), transparent 28%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    min-height: 100vh;
+}
+
+.glass-panel {
+    background: var(--panel);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+}
+
+.section-title {
+    font-family: "Space Grotesk", sans-serif;
+    letter-spacing: -0.03em;
+}
+
+.subtle-grid {
+    background-image: linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
