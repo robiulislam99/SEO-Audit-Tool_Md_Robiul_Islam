@@ -10,6 +10,7 @@ SEO analysis engine. Each check returns:
 """
 
 import json
+from urllib.parse import urlparse
 
 
 def _result(check_name, category, severity, weight, message,
@@ -27,7 +28,7 @@ def _result(check_name, category, severity, weight, message,
     }
 
 
-# ---------- Existing checks, upgraded to 3-state severity ----------
+# ---------- On-page checks ----------
 
 def check_title(page_data):
     title = (page_data.get("title") or "").strip()
@@ -172,9 +173,31 @@ def check_internal_links(page_data):
     return _result("internal_links", "technical", "pass", 5, f"{len(internal)} internal links found.")
 
 
-# ---------- New checks ----------
+# ---------- Technical checks ----------
+
+def _normalize_url_for_comparison(url):
+    """
+    Normalizes a URL for loose comparison: lowercases the host, strips a
+    trailing slash, and drops query string/fragment. This avoids false
+    positives when comparing scheme/www variants that are functionally
+    the same page (e.g. http://example.com vs https://www.example.com/).
+    """
+    if not url:
+        return ""
+    parsed = urlparse(url.strip())
+    host = parsed.netloc.lower().removeprefix("www.")
+    path = parsed.path.rstrip("/")
+    return f"{host}{path}"
+
 
 def check_canonical_url(page_data):
+    """
+    Compares the canonical tag against the page's FINAL URL (after any
+    redirects), not the raw URL the user typed. This matters because sites
+    routinely redirect http->https or bare-domain->www, and a canonical tag
+    pointing to that redirected destination is correct, expected behavior —
+    not something that should be flagged as "pointing elsewhere".
+    """
     canonical = page_data.get("canonical_url")
 
     if not canonical:
@@ -183,8 +206,14 @@ def check_canonical_url(page_data):
                         affected_element='<link rel="canonical">',
                         recommendation="Add a canonical tag to prevent duplicate content issues.")
 
-    page_url = page_data.get("url", "")
-    if canonical.rstrip("/") != page_url.rstrip("/"):
+    # Prefer final_url (post-redirect); fall back to url if a caller
+    # is using an older page_data shape that doesn't have it yet.
+    reference_url = page_data.get("final_url") or page_data.get("url", "")
+
+    canonical_normalized = _normalize_url_for_comparison(canonical)
+    reference_normalized = _normalize_url_for_comparison(reference_url)
+
+    if canonical_normalized != reference_normalized:
         return _result("canonical_url", "technical", "warning", 3,
                         f"Canonical URL points elsewhere: {canonical}",
                         affected_element=f'<link rel="canonical" href="{canonical}">',
@@ -194,18 +223,47 @@ def check_canonical_url(page_data):
 
 
 def check_robots_meta(page_data):
-    robots = (page_data.get("robots_meta") or "").lower()
+    """
+    Checks all three places a page can be told not to index, in order of
+    how commonly they're used:
+      1. <meta name="robots" content="noindex">      - the standard tag
+      2. <meta name="googlebot" content="noindex">    - Google-specific override
+      3. X-Robots-Tag: noindex (HTTP response header) - can block indexing
+         with no visible HTML trace at all
+    Any one of these being set to noindex means the page won't be indexed,
+    regardless of what the other two say.
+    """
+    robots_meta = (page_data.get("robots_meta") or "").lower()
+    googlebot_meta = (page_data.get("googlebot_meta") or "").lower()
+    robots_header = (page_data.get("robots_header") or "").lower()
 
-    if "noindex" in robots:
+    if "noindex" in robots_meta:
         return _result("robots_meta", "technical", "fail", 10,
-                        "Page is set to 'noindex' — it will NOT appear in search results.",
-                        affected_element=f'<meta name="robots" content="{robots}">',
+                        "Page is set to 'noindex' via meta tag — it will NOT appear in search results.",
+                        affected_element=f'<meta name="robots" content="{robots_meta}">',
                         recommendation="Remove 'noindex' if you want this page to be discoverable in search engines.")
 
-    return _result("robots_meta", "technical", "pass", 5,
-                    "Page is indexable (no blocking robots directive)." if robots else
-                    "No robots meta tag — page is indexable by default.")
+    if "noindex" in googlebot_meta:
+        return _result("robots_meta", "technical", "fail", 10,
+                        "Page is set to 'noindex' specifically for Googlebot — it will NOT appear in Google search results.",
+                        affected_element=f'<meta name="googlebot" content="{googlebot_meta}">',
+                        recommendation="Remove 'noindex' from the googlebot meta tag if you want this page indexed by Google.")
 
+    if "noindex" in robots_header:
+        return _result("robots_meta", "technical", "fail", 10,
+                        "Page is set to 'noindex' via the X-Robots-Tag HTTP header — it will NOT appear in search results.",
+                        affected_element=f"X-Robots-Tag: {robots_header}",
+                        recommendation="Remove 'noindex' from the X-Robots-Tag response header if you want this page indexed.")
+
+    if robots_meta or googlebot_meta or robots_header:
+        return _result("robots_meta", "technical", "pass", 5,
+                        "Robots directives are present and do not block indexing.")
+
+    return _result("robots_meta", "technical", "pass", 5,
+                    "No robots-blocking directive found — page is indexable by default.")
+
+
+# ---------- Social checks ----------
 
 def check_open_graph(page_data):
     og = page_data.get("og_tags", {})
@@ -240,6 +298,8 @@ def check_twitter_card(page_data):
 
     return _result("twitter_card", "social", "pass", 3, "Twitter Card tags are present.")
 
+
+# ---------- Structured data ----------
 
 def check_structured_data(page_data):
     blocks = page_data.get("structured_data", [])
