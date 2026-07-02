@@ -268,8 +268,81 @@ async function fetchAndRenderReport(auditId) {
     }
 }
 
+function severityBadge(severity) {
+    if (severity === "pass") {
+        return { icon: "&check;", classes: "bg-green-100 text-green-600" };
+    } else if (severity === "warning") {
+        return { icon: "!", classes: "bg-amber-100 text-amber-600" };
+    } else {
+        return { icon: "&times;", classes: "bg-red-100 text-red-600" };
+    }
+}
+
 function renderReport(data) {
-    // ... unchanged from previous step ...
+    const passed = data.results.filter(r => r.severity === "pass");
+    const warnings = data.results.filter(r => r.severity === "warning");
+    const failed = data.results.filter(r => r.severity === "fail");
+
+    let scoreColorClass = "border-red-500 text-red-600";
+    let scoreLabel = "Poor";
+    if (data.score >= 80) {
+        scoreColorClass = "border-green-500 text-green-600";
+        scoreLabel = "Good";
+    } else if (data.score >= 50) {
+        scoreColorClass = "border-amber-500 text-amber-600";
+        scoreLabel = "Needs improvement";
+    }
+    const [borderClass, textClass] = scoreColorClass.split(' ');
+
+    const resultsHtml = data.results.map(r => {
+        const badge = severityBadge(r.severity);
+        return `
+            <div class="p-4 flex items-start gap-3">
+                <span class="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full ${badge.classes} flex items-center justify-center text-sm font-bold">
+                    ${badge.icon}
+                </span>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-800">${escapeHtml(r.check_name.replace(/_/g, ' '))}</p>
+                    <p class="text-sm text-gray-500">${escapeHtml(r.message)}</p>
+                    ${r.affected_element ? `<p class="text-xs text-gray-400 mt-1 font-mono bg-gray-50 rounded px-2 py-1 inline-block">${escapeHtml(r.affected_element)}</p>` : ''}
+                    ${r.recommendation ? `<p class="text-sm text-blue-600 mt-1">💡 ${escapeHtml(r.recommendation)}</p>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    reportSection.innerHTML = `
+        <div class="mb-6">
+            <button onclick="resetForm()" class="text-sm text-blue-600 hover:underline">&larr; Run another audit</button>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 mb-8 text-center">
+            <p class="text-sm text-gray-500 mb-2 break-all">${escapeHtml(data.url)}</p>
+            <div class="mx-auto w-32 h-32 rounded-full flex items-center justify-center border-8 ${borderClass}">
+                <span class="text-4xl font-bold ${textClass}">${data.score}</span>
+            </div>
+            <p class="mt-4 text-lg font-medium ${textClass}">${scoreLabel}</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-green-700">${passed.length}</p>
+                <p class="text-sm text-green-600">Passed</p>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-amber-700">${warnings.length}</p>
+                <p class="text-sm text-amber-600">Warnings</p>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p class="text-2xl font-bold text-red-700">${failed.length}</p>
+                <p class="text-sm text-red-600">Failed</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
+            ${resultsHtml}
+        </div>
+    `;
 }
 
 function escapeHtml(str) {

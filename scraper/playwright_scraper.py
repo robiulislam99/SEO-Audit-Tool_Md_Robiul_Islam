@@ -22,7 +22,6 @@ Usage:
 from urllib.parse import urlparse
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
-
 class PageScrapeError(Exception):
     """
     Raised when a page cannot be loaded or scraped.
@@ -153,6 +152,40 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True) -> dict:
                     result["links"]["internal"].append(full_url)
                 else:
                     result["links"]["external"].append(full_url)
+            
+            # scraper/playwright_scraper.py — additions inside the try block, after existing extraction code
+
+            # --- Canonical URL ---
+            canonical_el = page.query_selector('link[rel="canonical"]')
+            result["canonical_url"] = canonical_el.get_attribute("href") if canonical_el else None
+
+            # --- Robots meta tag ---
+            robots_el = page.query_selector('meta[name="robots"]')
+            result["robots_meta"] = robots_el.get_attribute("content") if robots_el else None
+
+            # --- Open Graph tags ---
+            og_tags = {}
+            for prop in ["og:title", "og:description", "og:image", "og:url", "og:type"]:
+                el = page.query_selector(f'meta[property="{prop}"]')
+                if el:
+                    og_tags[prop] = el.get_attribute("content")
+            result["og_tags"] = og_tags
+
+            # --- Twitter Card tags ---
+            twitter_tags = {}
+            for name in ["twitter:card", "twitter:title", "twitter:description", "twitter:image"]:
+                el = page.query_selector(f'meta[name="{name}"]')
+                if el:
+                    twitter_tags[name] = el.get_attribute("content")
+            result["twitter_tags"] = twitter_tags
+
+            # --- Structured data (JSON-LD only — covers the vast majority of real sites) ---
+            structured_data_blocks = []
+            for script in page.query_selector_all('script[type="application/ld+json"]'):
+                content = script.inner_text()
+                if content and content.strip():
+                    structured_data_blocks.append(content.strip())
+            result["structured_data"] = structured_data_blocks
 
         except PlaywrightTimeoutError:
             raise PageScrapeError(

@@ -2,6 +2,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from django_q.tasks import async_task
 
@@ -10,6 +11,7 @@ from .models import Audit
 from .tasks import run_audit
 
 
+@ensure_csrf_cookie
 def home(request):
     """Landing page — shows the URL submission form."""
     form = AuditSubmitForm()
@@ -137,12 +139,17 @@ def report_api(request, audit_id):
         "url": audit.url,
         "score": audit.score,
         "completed_at": audit.completed_at.strftime("%b %d, %Y — %H:%M"),
+        # audits/views.py — update report_api's results serialization
+
         "results": [
             {
                 "check_name": r.check_name,
                 "category": r.category,
+                "severity": r.severity,
                 "passed": r.passed,
                 "message": r.message,
+                "affected_element": r.affected_element,
+                "recommendation": r.recommendation,
             }
             for r in results
         ],

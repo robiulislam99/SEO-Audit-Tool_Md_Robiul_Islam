@@ -41,6 +41,7 @@ class Audit(models.Model):
         blank=True,
         help_text="Populated only if status is 'failed' — stores what went wrong"
     )
+
     error_type = models.CharField(
         max_length=30,
         null=True,
@@ -75,6 +76,7 @@ class Audit(models.Model):
         self.save()
 
     def mark_failed(self, error_message, error_type="unknown"):
+        """Convenience method to mark an audit as failed."""
         self.status = self.Status.FAILED
         self.error_message = error_message
         self.error_type = error_type
@@ -93,6 +95,8 @@ class AuditResult(models.Model):
         ON_PAGE = 'on_page', 'On-Page'
         PERFORMANCE = 'performance', 'Performance'
         SOCIAL = 'social', 'Social'
+        STRUCTURED_DATA = 'structured_data', 'Structured Data'
+        ACCESSIBILITY = 'accessibility', 'Accessibility'
 
     class Severity(models.TextChoices):
         PASS_ = 'pass', 'Pass'
@@ -133,6 +137,20 @@ class AuditResult(models.Model):
         help_text="Human-readable explanation, e.g. 'Title is 72 characters — too long'"
     )
 
+    affected_element = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="The specific tag/element this check refers to, e.g. '<title>' or 'img[src=\"/logo.png\"]'"
+    )
+
+    recommendation = models.CharField(
+        max_length=500,
+        null=True,
+        blank=True,
+        help_text="Actionable suggestion for fixing this issue, shown only when severity != pass"
+    )
+
     details = models.JSONField(
         null=True,
         blank=True,
@@ -145,5 +163,4 @@ class AuditResult(models.Model):
         verbose_name_plural = "Audit Results"
 
     def __str__(self):
-        status = "✓" if self.passed else "✗"
-        return f"{status} {self.check_name} ({self.audit.url})"
+        return f"[{self.severity}] {self.check_name} ({self.audit.url})"
