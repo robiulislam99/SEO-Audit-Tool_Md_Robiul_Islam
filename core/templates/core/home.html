@@ -2,69 +2,127 @@
 {% extends "core/base.html" %}
 
 {% block content %}
-<div class="max-w-xl mx-auto mt-10">
+<div class="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
+    <section class="relative overflow-hidden rounded-[2rem] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-2xl shadow-slate-900/10 sm:px-8 sm:py-10 lg:px-10">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.22),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.18),transparent_24%)]"></div>
+        <div class="relative space-y-6">
+            <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-teal-100">SEO intelligence</div>
+            <div class="max-w-2xl space-y-4">
+                <h1 class="section-title text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">A cleaner way to audit technical SEO.</h1>
+                <p class="max-w-xl text-base leading-7 text-slate-300 sm:text-lg">Run a fast audit, track scores, and review actionable findings in a layout that feels like a real product instead of a form page.</p>
+            </div>
 
-    <!-- ============ INPUT SECTION ============ -->
-    <div id="form-section" class="text-center">
-        <h1 class="text-3xl font-bold text-gray-900 mb-3">Check your website's SEO</h1>
-        <p class="text-gray-500 mb-8">Enter a URL and get an instant, actionable SEO report.</p>
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur">
+                    <p class="text-3xl font-semibold">100</p>
+                    <p class="mt-1 text-sm text-slate-300">SEO score scale</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur">
+                    <p class="text-3xl font-semibold">3</p>
+                    <p class="mt-1 text-sm text-slate-300">Audit states tracked</p>
+                </div>
+                <div class="rounded-3xl border border-white/10 bg-white/8 p-4 backdrop-blur">
+                    <p class="text-3xl font-semibold">6</p>
+                    <p class="mt-1 text-sm text-slate-300">Issue categories</p>
+                </div>
+            </div>
 
-        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm text-left">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
-            <input type="url" id="url-input" placeholder="https://example.com" required
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex flex-wrap gap-3 text-sm text-slate-200">
+                <span class="rounded-full border border-white/10 bg-white/8 px-4 py-2">Mobile friendly</span>
+                <span class="rounded-full border border-white/10 bg-white/8 px-4 py-2">Server-backed results</span>
+                <span class="rounded-full border border-white/10 bg-white/8 px-4 py-2">Clear pass/fail summary</span>
+            </div>
+        </div>
+    </section>
 
-            <label class="block text-sm font-medium text-gray-700 mt-4 mb-1">
-                Target keyword <span class="text-gray-400">(optional)</span>
-            </label>
-            <input type="text" id="keyword-input" placeholder="e.g. seo audit tool"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <section class="space-y-6">
+        <div id="form-section" class="glass-panel rounded-[2rem] p-6 sm:p-8">
+            <div class="mb-6">
+                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700">Start audit</p>
+                <h2 class="section-title mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Enter a website and get a structured report.</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-600">The frontend keeps your backend flow: submit a URL, poll status, then render the final report once the audit finishes.</p>
+            </div>
 
-            <p id="form-error" class="text-red-600 text-sm mt-2 hidden"></p>
+            <div class="space-y-5 text-left">
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700" for="url-input">Website URL</label>
+                    <input type="url" id="url-input" placeholder="https://example.com" required class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15">
+                </div>
 
-            <button id="submit-btn"
-                class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors">
-                Run Audit
-            </button>
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700" for="keyword-input">Target keyword <span class="font-normal text-slate-400">(optional)</span></label>
+                    <input type="text" id="keyword-input" placeholder="e.g. seo audit tool" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15">
+                </div>
+
+                <p id="form-error" class="hidden rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"></p>
+
+                <button id="submit-btn" class="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-700 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-teal-700/20 transition hover:-translate-y-0.5 hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-70">
+                    <span>Run audit</span>
+                    <span aria-hidden="true" class="transition group-hover:translate-x-0.5">→</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+            <div class="glass-panel rounded-3xl p-5">
+                <p class="text-2xl font-bold text-slate-900">Fast</p>
+                <p class="mt-1 text-sm leading-6 text-slate-600">A streamlined submit and polling flow keeps the experience snappy.</p>
+            </div>
+            <div class="glass-panel rounded-3xl p-5">
+                <p class="text-2xl font-bold text-slate-900">Clear</p>
+                <p class="mt-1 text-sm leading-6 text-slate-600">Pass, warning, and fail states are visually separated for quick scanning.</p>
+            </div>
+            <div class="glass-panel rounded-3xl p-5">
+                <p class="text-2xl font-bold text-slate-900">Responsive</p>
+                <p class="mt-1 text-sm leading-6 text-slate-600">The layout collapses cleanly on smaller screens without losing structure.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div id="loading-section" class="hidden mt-8">
+    <div class="glass-panel rounded-[2rem] p-6 sm:p-8">
+        <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700">Audit running</p>
+                <h2 class="section-title mt-3 text-2xl font-bold text-slate-900 sm:text-3xl">We are analyzing this site now.</h2>
+                <p class="mt-3 break-all text-sm leading-6 text-slate-600" id="loading-url"></p>
+                <p class="mt-2 text-sm text-slate-500" id="loading-step">Getting started...</p>
+            </div>
+
+            <div class="space-y-5">
+                <div class="flex justify-center lg:justify-start">
+                    <div class="flex h-16 w-16 items-center justify-center rounded-full border-4 border-teal-600/20 border-t-teal-700 animate-spin"></div>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <span id="step-1" class="rounded-2xl border border-teal-200 bg-teal-50 px-3 py-3 text-teal-700 text-center">Fetching page</span>
+                    <span id="step-2" class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center">Analyzing SEO</span>
+                    <span id="step-3" class="rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center">Calculating score</span>
+                </div>
+            </div>
         </div>
     </div>
-
-    <!-- ============ LOADING SECTION (replace existing) ============ -->
-<div id="loading-section" class="hidden text-center mt-10">
-    <p class="text-lg font-medium text-gray-800 mb-1 break-all" id="loading-url"></p>
-    <p class="text-gray-500 mb-8" id="loading-step">Getting started...</p>
-
-    <div class="flex justify-center mb-8">
-        <div class="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-
-    <!-- Progress steps, purely cosmetic, driven by elapsed time -->
-    <div class="flex justify-center gap-2 text-xs text-gray-400">
-        <span id="step-1" class="px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-medium">Fetching page</span>
-        <span id="step-2" class="px-3 py-1 rounded-full">Analyzing SEO</span>
-        <span id="step-3" class="px-3 py-1 rounded-full">Calculating score</span>
-    </div>
 </div>
 
-<!-- ============ ERROR SECTION (new) ============ -->
-<div id="error-section" class="hidden mt-10">
-    <div class="bg-white rounded-xl border border-red-200 shadow-sm p-8 text-center">
-        <div class="mx-auto w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl font-bold mb-4">
-            !
+<div id="error-section" class="hidden mt-8">
+    <div class="glass-panel rounded-[2rem] p-6 sm:p-8">
+        <div class="grid gap-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
+            <div class="flex justify-center lg:justify-start">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-100 text-2xl font-bold text-rose-600">!</div>
+            </div>
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.22em] text-rose-700">Audit failed</p>
+                <h2 class="section-title mt-2 text-2xl font-bold text-slate-900" id="error-title">Couldn't complete this audit</h2>
+                <p class="mt-3 text-sm leading-6 text-slate-600" id="error-message">Something went wrong.</p>
+                <button onclick="resetForm()" class="mt-5 inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+                    Try again
+                </button>
+            </div>
         </div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-2" id="error-title">Couldn't complete this audit</h2>
-        <p class="text-gray-500 mb-6" id="error-message">Something went wrong.</p>
-        <button onclick="resetForm()"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg transition-colors">
-            Try again
-        </button>
     </div>
 </div>
 
-    <!-- ============ REPORT SECTION ============ -->
-    <div id="report-section" class="hidden mt-6"></div>
-
-</div>
+<div id="report-section" class="hidden mt-8"></div>
 
 <script>
 function getCookie(name) {
@@ -119,7 +177,7 @@ function hideFormError() {
 
 function resetSubmitButton() {
     submitBtn.disabled = false;
-    submitBtn.textContent = "Run Audit";
+    submitBtn.innerHTML = '<span>Run audit</span><span aria-hidden="true" class="transition group-hover:translate-x-0.5">→</span>';
 }
 
 // ---------- Basic client-side URL sanity check (fast feedback, no server round trip) ----------
@@ -155,7 +213,7 @@ submitBtn.addEventListener('click', async () => {
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = "Starting audit...";
+    submitBtn.innerHTML = '<span>Starting audit...</span>';
 
     try {
         const res = await fetch("{% url 'audits:api_submit' %}", {
@@ -194,14 +252,14 @@ function startLoadingAnimation() {
     const labels = ["Fetching page...", "Analyzing SEO...", "Calculating score..."];
     let current = 0;
 
-    steps.forEach(id => document.getElementById(id).className = "px-3 py-1 rounded-full");
-    document.getElementById(steps[0]).className = "px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-medium";
+    steps.forEach(id => document.getElementById(id).className = "rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center");
+    document.getElementById(steps[0]).className = "rounded-2xl border border-teal-200 bg-teal-50 px-3 py-3 text-center text-teal-700";
     document.getElementById('loading-step').textContent = labels[0];
 
     window._loadingInterval = setInterval(() => {
         current = Math.min(current + 1, steps.length - 1);
-        steps.forEach(id => document.getElementById(id).className = "px-3 py-1 rounded-full");
-        document.getElementById(steps[current]).className = "px-3 py-1 rounded-full bg-blue-100 text-blue-600 font-medium";
+        steps.forEach(id => document.getElementById(id).className = "rounded-2xl border border-slate-200 bg-white px-3 py-3 text-center");
+        document.getElementById(steps[current]).className = "rounded-2xl border border-teal-200 bg-teal-50 px-3 py-3 text-center text-teal-700";
         document.getElementById('loading-step').textContent = labels[current];
     }, 4000);
 }
@@ -270,11 +328,11 @@ async function fetchAndRenderReport(auditId) {
 
 function severityBadge(severity) {
     if (severity === "pass") {
-        return { icon: "&check;", classes: "bg-green-100 text-green-600" };
+        return { icon: "&check;", classes: "bg-emerald-100 text-emerald-700" };
     } else if (severity === "warning") {
-        return { icon: "!", classes: "bg-amber-100 text-amber-600" };
+        return { icon: "!", classes: "bg-amber-100 text-amber-700" };
     } else {
-        return { icon: "&times;", classes: "bg-red-100 text-red-600" };
+        return { icon: "&times;", classes: "bg-rose-100 text-rose-700" };
     }
 }
 
@@ -283,11 +341,11 @@ function renderReport(data) {
     const warnings = data.results.filter(r => r.severity === "warning");
     const failed = data.results.filter(r => r.severity === "fail");
 
-    let scoreColorClass = "border-red-500 text-red-600";
+    let scoreColorClass = "border-rose-500 text-rose-600";
     let scoreLabel = "Poor";
     if (data.score >= 80) {
-        scoreColorClass = "border-green-500 text-green-600";
-        scoreLabel = "Good";
+        scoreColorClass = "border-emerald-500 text-emerald-600";
+        scoreLabel = "Strong";
     } else if (data.score >= 50) {
         scoreColorClass = "border-amber-500 text-amber-600";
         scoreLabel = "Needs improvement";
@@ -297,15 +355,15 @@ function renderReport(data) {
     const resultsHtml = data.results.map(r => {
         const badge = severityBadge(r.severity);
         return `
-            <div class="p-4 flex items-start gap-3">
-                <span class="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full ${badge.classes} flex items-center justify-center text-sm font-bold">
+            <div class="p-4 sm:p-5 flex items-start gap-3 sm:gap-4">
+                <span class="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full ${badge.classes} flex items-center justify-center text-sm font-bold">
                     ${badge.icon}
                 </span>
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-800">${escapeHtml(r.check_name.replace(/_/g, ' '))}</p>
-                    <p class="text-sm text-gray-500">${escapeHtml(r.message)}</p>
-                    ${r.affected_element ? `<p class="text-xs text-gray-400 mt-1 font-mono bg-gray-50 rounded px-2 py-1 inline-block">${escapeHtml(r.affected_element)}</p>` : ''}
-                    ${r.recommendation ? `<p class="text-sm text-blue-600 mt-1">💡 ${escapeHtml(r.recommendation)}</p>` : ''}
+                    <p class="text-sm font-semibold text-slate-900">${escapeHtml(r.check_name.replace(/_/g, ' '))}</p>
+                    <p class="mt-1 text-sm leading-6 text-slate-600">${escapeHtml(r.message)}</p>
+                    ${r.affected_element ? `<p class="mt-2 inline-block rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-500">${escapeHtml(r.affected_element)}</p>` : ''}
+                    ${r.recommendation ? `<p class="mt-2 text-sm font-medium text-teal-700">Recommendation: ${escapeHtml(r.recommendation)}</p>` : ''}
                 </div>
             </div>
         `;
@@ -313,33 +371,45 @@ function renderReport(data) {
 
     reportSection.innerHTML = `
         <div class="mb-6">
-            <button onclick="resetForm()" class="text-sm text-blue-600 hover:underline">&larr; Run another audit</button>
+            <button onclick="resetForm()" class="inline-flex items-center gap-2 text-sm font-semibold text-teal-700 hover:text-teal-800">
+                <span aria-hidden="true">&larr;</span>
+                <span>Run another audit</span>
+            </button>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 mb-8 text-center">
-            <p class="text-sm text-gray-500 mb-2 break-all">${escapeHtml(data.url)}</p>
-            <div class="mx-auto w-32 h-32 rounded-full flex items-center justify-center border-8 ${borderClass}">
-                <span class="text-4xl font-bold ${textClass}">${data.score}</span>
+        <div class="glass-panel rounded-[2rem] p-6 sm:p-8 mb-8 text-center">
+            <div class="mx-auto flex max-w-3xl flex-col items-center gap-6">
+                <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">Audit complete</div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-2 break-all">${escapeHtml(data.url)}</p>
+                    <h2 class="section-title text-3xl font-bold text-slate-900 sm:text-4xl">Your SEO score is ready.</h2>
+                </div>
+                <div class="mx-auto flex h-36 w-36 items-center justify-center rounded-full border-8 bg-white ${borderClass}">
+                    <span class="text-5xl font-bold ${textClass}">${data.score}</span>
+                </div>
+                <div>
+                    <p class="text-lg font-semibold ${textClass}">${scoreLabel}</p>
+                    <p class="mt-1 text-sm text-slate-500">Audited on ${escapeHtml(data.completed_at || '')}</p>
+                </div>
             </div>
-            <p class="mt-4 text-lg font-medium ${textClass}">${scoreLabel}</p>
         </div>
 
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                <p class="text-2xl font-bold text-green-700">${passed.length}</p>
-                <p class="text-sm text-green-600">Passed</p>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
+            <div class="glass-panel rounded-3xl p-5 text-center">
+                <p class="text-2xl font-bold text-emerald-700">${passed.length}</p>
+                <p class="text-sm text-slate-600">Passed checks</p>
             </div>
-            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+            <div class="glass-panel rounded-3xl p-5 text-center">
                 <p class="text-2xl font-bold text-amber-700">${warnings.length}</p>
-                <p class="text-sm text-amber-600">Warnings</p>
+                <p class="text-sm text-slate-600">Warnings</p>
             </div>
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                <p class="text-2xl font-bold text-red-700">${failed.length}</p>
-                <p class="text-sm text-red-600">Failed</p>
+            <div class="glass-panel rounded-3xl p-5 text-center">
+                <p class="text-2xl font-bold text-rose-700">${failed.length}</p>
+                <p class="text-sm text-slate-600">Failed checks</p>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
+        <div class="glass-panel overflow-hidden rounded-[2rem] divide-y divide-slate-200/70">
             ${resultsHtml}
         </div>
     `;
@@ -361,6 +431,7 @@ function resetForm() {
     document.getElementById('keyword-input').value = '';
     hideFormError();
     resetSubmitButton();
+    loadingSection.classList.add('hidden');
 }
 </script>
 {% endblock %}

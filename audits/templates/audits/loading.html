@@ -2,12 +2,15 @@
 {% extends "core/base.html" %}
 
 {% block content %}
-<div class="max-w-xl mx-auto mt-20 text-center">
-    <h1 class="text-2xl font-semibold mb-4">Auditing {{ audit.url }}</h1>
-    <div class="animate-pulse text-gray-500" id="status-text">Status: {{ audit.status }}...</div>
-
-    <div class="mt-6 flex justify-center">
-        <div class="h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+<div class="mx-auto max-w-3xl">
+    <div class="glass-panel rounded-[2rem] p-6 text-center sm:p-8">
+        <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border-4 border-teal-500/15 border-t-teal-700 animate-spin"></div>
+        <p class="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700">Audit running</p>
+        <h1 class="section-title mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Auditing your site now</h1>
+        <p class="mx-auto mt-3 max-w-2xl break-all text-sm leading-6 text-slate-600">{{ audit.url }}</p>
+        <div class="mt-6 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-500">
+            <span id="status-text">Status: {{ audit.status }}...</span>
+        </div>
     </div>
 </div>
 
@@ -27,7 +30,7 @@
             document.getElementById("status-text").textContent =
                 `Audit failed: ${data.error_message}`;
         } else {
-            setTimeout(pollStatus, 2000); // poll again in 2 seconds
+            setTimeout(pollStatus, 2000);
         }
     }
 
