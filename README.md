@@ -47,7 +47,7 @@ Run these commands in order, from the project root folder.
 ### 1. Clone / navigate into the project folder
 
 ```bash
-git clone 
+git clone https://github.com/robiulislam99/SEO-Audit-Tool_Md_Robiul_Islam.git seo_audit_tool
 cd seo_audit_tool
 ```
 
