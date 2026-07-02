@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>SEO Audit Report</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 14mm 18mm;
+        }
+
+        :root {
+            color-scheme: light;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #0f172a;
+            font-size: 11pt;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .container {
+            position: relative;
+        }
+
+        .top-band {
+            height: 8px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #0f766e, #14b8a6, #0ea5e9);
+            margin-bottom: 16px;
+        }
+
+        .header {
+            border: 1px solid #dbe4ee;
+            border-radius: 16px;
+            padding: 18px 18px 14px;
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+            margin-bottom: 18px;
+        }
+
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            font-size: 8pt;
+            color: #0f766e;
+            font-weight: 700;
+        }
+
+        h1, h2, h3, p {
+            margin: 0 0 8px 0;
+        }
+
+        h1 {
+            font-size: 22pt;
+        }
+
+        h2 {
+            font-size: 14pt;
+            margin-top: 18px;
+        }
+
+        h3 {
+            font-size: 11pt;
+            margin-top: 12px;
+        }
+
+        .muted {
+            color: #475569;
+        }
+
+        .summary-grid {
+            display: table;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px;
+            margin: 10px 0 8px;
+        }
+
+        .summary-card {
+            display: table-cell;
+            width: 25%;
+            border: 1px solid #dbe4ee;
+            border-radius: 10px;
+            padding: 10px;
+            vertical-align: top;
+            background: #ffffff;
+        }
+
+        .summary-value {
+            font-size: 18pt;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .score-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #ecfeff;
+            color: #0f766e;
+            font-weight: 700;
+            font-size: 9pt;
+        }
+
+        .section {
+            border: 1px solid #dbe4ee;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            break-inside: avoid;
+            background: #ffffff;
+        }
+
+        .section-grid {
+            display: table;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px;
+            margin-bottom: 10px;
+        }
+
+        .section-card {
+            display: table-cell;
+            width: 33.333%;
+            border: 1px solid #dbe4ee;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            vertical-align: top;
+        }
+
+        .section-card .label {
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 8pt;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .section-card .value {
+            font-size: 16pt;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .issue {
+            border-left: 4px solid #0f766e;
+            padding: 8px 10px;
+            margin: 8px 0;
+            background: #f8fafc;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .issue.fail { border-left-color: #e11d48; }
+        .issue.warning { border-left-color: #d97706; }
+        .issue.pass { border-left-color: #16a34a; }
+
+        .meta-list {
+            margin: 0;
+            padding-left: 16px;
+        }
+
+        .meta-list li {
+            margin-bottom: 4px;
+        }
+
+        .small {
+            font-size: 9pt;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .muted-box {
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-band"></div>
+        <div class="header">
+            <div class="eyebrow">SEO Audit Report</div>
+            <h1>{{ audit.url }}</h1>
+            <p class="muted">Completed {{ audit.completed_at|date:"M d, Y \a\t H:i" }} · Overall score {{ audit.score|default:0 }}/100</p>
+            <span class="score-pill">{{ score_label }}</span>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="muted small">Overall score</div>
+                <div class="summary-value">{{ audit.score|default:0 }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="muted small">Technical</div>
+                <div class="summary-value">{{ audit.technical_seo_score|default:0 }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="muted small">Content</div>
+                <div class="summary-value">{{ audit.content_seo_score|default:0 }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="muted small">Performance</div>
+                <div class="summary-value">{{ audit.performance_score|default:0 }}</div>
+            </div>
+        </div>
+
+        <h2>Core Metrics</h2>
+        <div class="section-grid">
+            <div class="section-card">
+                <div class="label">Report title</div>
+                <div class="value">SEO Audit</div>
+            </div>
+            <div class="section-card">
+                <div class="label">Issues found</div>
+                <div class="value">{{ audit.full_report.issue_count|default:results|length }}</div>
+            </div>
+            <div class="section-card">
+                <div class="label">Report status</div>
+                <div class="value">Complete</div>
+            </div>
+        </div>
+        <div class="section">
+            <p><strong>URL:</strong> {{ audit.full_report.url|default:audit.url }}</p>
+            <p><strong>Completed at:</strong> {{ audit.completed_at|date:"M d, Y \a\t H:i" }}</p>
+            <p><strong>Audit link:</strong> {{ report_url }}</p>
+        </div>
+
+        <h2>Section Scores</h2>
+        <div class="section-grid">
+            <div class="section-card">
+                <div class="label">Technical</div>
+                <div class="value">{{ audit.technical_seo_score|default:0 }}</div>
+            </div>
+            <div class="section-card">
+                <div class="label">Content</div>
+                <div class="value">{{ audit.content_seo_score|default:0 }}</div>
+            </div>
+            <div class="section-card">
+                <div class="label">Performance</div>
+                <div class="value">{{ audit.performance_score|default:0 }}</div>
+            </div>
+        </div>
+
+        <h2>Detailed Checks</h2>
+        {% for result in results %}
+            <div class="issue {% if result.passed %}pass{% elif result.severity == 'warning' %}warning{% else %}fail{% endif %}">
+                <h3>{{ result.check_name|title }}</h3>
+                <p>{{ result.message }}</p>
+                {% if result.affected_element %}
+                    <p class="small muted"><strong>Affected element:</strong> {{ result.affected_element }}</p>
+                {% endif %}
+                {% if result.recommendation %}
+                    <p class="small"><strong>Suggestion:</strong> {{ result.recommendation }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="page-break"></div>
+
+        <h2>Issues and Suggestions</h2>
+        <div class="section">
+            <h3>Technical Issues</h3>
+            {% for issue in issue_groups.meta %}
+                <div class="issue {% if issue.severity == 'warning' %}warning{% else %}fail{% endif %}">
+                    <strong>{{ issue.check_name|title }}</strong>
+                    <p>{{ issue.message }}</p>
+                    {% if issue.recommendation %}<p class="small">{{ issue.recommendation }}</p>{% endif %}
+                </div>
+            {% empty %}
+                <p class="muted-box">No technical issues reported.</p>
+            {% endfor %}
+
+            <h3>Content Issues</h3>
+            {% for issue in issue_groups.content %}
+                <div class="issue {% if issue.severity == 'warning' %}warning{% else %}fail{% endif %}">
+                    <strong>{{ issue.check_name|title }}</strong>
+                    <p>{{ issue.message }}</p>
+                    {% if issue.recommendation %}<p class="small">{{ issue.recommendation }}</p>{% endif %}
+                </div>
+            {% empty %}
+                <p class="muted-box">No content issues reported.</p>
+            {% endfor %}
+
+            <h3>Performance Issues</h3>
+            {% for issue in issue_groups.performance %}
+                <div class="issue {% if issue.severity == 'warning' %}warning{% else %}fail{% endif %}">
+                    <strong>{{ issue.check_name|title }}</strong>
+                    <p>{{ issue.message }}</p>
+                    {% if issue.recommendation %}<p class="small">{{ issue.recommendation }}</p>{% endif %}
+                </div>
+            {% empty %}
+                <p class="muted-box">No performance issues reported.</p>
+            {% endfor %}
+        </div>
+
+        <h2>Actionable Suggestions</h2>
+        <div class="section">
+            {% if suggestions %}
+                {% for suggestion in suggestions %}
+                    <div class="issue warning">
+                        <strong>{{ suggestion.check_name|title }}</strong>
+                        <p>{{ suggestion.message }}</p>
+                        {% if suggestion.recommendation %}<p class="small">{{ suggestion.recommendation }}</p>{% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="muted-box">No additional suggestions available.</p>
+            {% endif %}
+        </div>
+
+        <h2>Supporting Metrics</h2>
+        <div class="section">
+            <p><strong>Word count:</strong> {{ content_quality.word_count|default:"—" }}</p>
+            <p><strong>Readability:</strong> {{ content_quality.readability_score|default:"—" }} ({{ content_quality.readability_label|default:"—" }})</p>
+            <p><strong>Total links:</strong> {{ link_analysis.total_links|default:"—" }}</p>
+            <p><strong>Broken links:</strong> {{ link_analysis.broken_links|length|default:"—" }}</p>
+            <p><strong>Missing alt images:</strong> {{ image_optimization.missing_alt_images|length|default:"—" }}</p>
+            <p><strong>Large images:</strong> {{ image_optimization.large_images|length|default:"—" }}</p>
+            <p><strong>Load time:</strong> {{ performance.load_time_ms|default:"—" }} ms</p>
+            <p><strong>DOMContentLoaded:</strong> {{ performance.dom_content_loaded_ms|default:"—" }} ms</p>
+            <p><strong>HTTPS:</strong> {% if security.is_https %}Yes{% else %}No{% endif %}</p>
+        </div>
+    </div>
+</body>
+</html>

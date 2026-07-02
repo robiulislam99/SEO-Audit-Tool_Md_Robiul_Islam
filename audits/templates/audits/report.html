@@ -11,6 +11,12 @@
         <span aria-hidden="true">↩</span>
         <span>Back to history</span>
     </a>
+    {% if audit.status == 'completed' %}
+    <a href="{% url 'audits:report_pdf' audit.id %}" class="ml-4 inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-800 hover:bg-teal-100">
+        <span aria-hidden="true">⬇</span>
+        <span>Download PDF</span>
+    </a>
+    {% endif %}
 </div>
 
 <div class="glass-panel rounded-[2rem] p-6 sm:p-8 mb-8">

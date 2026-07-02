@@ -12,6 +12,10 @@
     <div class="flex flex-wrap gap-2">
         <a href="?sort=date" class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if sort == 'date' %}border-teal-200 bg-teal-50 text-teal-700{% else %}border-slate-200 bg-white/80 text-slate-600 hover:border-teal-200 hover:text-teal-700{% endif %}">Newest first</a>
         <a href="?sort=score" class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if sort == 'score' %}border-teal-200 bg-teal-50 text-teal-700{% else %}border-slate-200 bg-white/80 text-slate-600 hover:border-teal-200 hover:text-teal-700{% endif %}">Highest score</a>
+        <form method="post" action="{% url 'audits:clear_history' %}" class="js-danger-form">
+            {% csrf_token %}
+            <button type="submit" class="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100" data-confirm-title="Clear all history?" data-confirm-message="This will permanently delete every saved audit report." data-confirm-action="Clear All History">Clear All History</button>
+        </form>
     </div>
 </div>
 
@@ -37,6 +41,10 @@
                 {% else %}
                     <span class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white/70 px-5 py-3 text-sm font-semibold text-slate-400">Report unavailable</span>
                 {% endif %}
+                <form method="post" action="{% url 'audits:delete_audit' audit.id %}" class="js-danger-form">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-white/80 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50" data-confirm-title="Delete this report?" data-confirm-message="This will permanently remove the report and all related results from history." data-confirm-action="Delete">Delete</button>
+                </form>
             </div>
         </div>
     </article>
@@ -46,4 +54,70 @@
     </div>
     {% endfor %}
 </div>
+
+<div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center px-4 py-6">
+    <div class="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"></div>
+    <div class="relative w-full max-w-lg rounded-[2rem] border border-white/60 bg-white p-6 shadow-2xl shadow-slate-950/20">
+        <div class="flex items-start gap-4">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-50 text-rose-700">
+                <span aria-hidden="true">!</span>
+            </div>
+            <div class="min-w-0 flex-1">
+                <h2 id="confirm-modal-title" class="section-title text-2xl font-bold text-slate-900">Confirm action</h2>
+                <p id="confirm-modal-message" class="mt-2 text-sm leading-6 text-slate-600">This action cannot be undone.</p>
+            </div>
+        </div>
+        <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button id="confirm-modal-cancel" type="button" class="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Cancel</button>
+            <button id="confirm-modal-submit" type="button" class="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-rose-700">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById("confirm-modal");
+    const modalTitle = document.getElementById("confirm-modal-title");
+    const modalMessage = document.getElementById("confirm-modal-message");
+    const modalCancel = document.getElementById("confirm-modal-cancel");
+    const modalSubmit = document.getElementById("confirm-modal-submit");
+    let pendingForm = null;
+
+    function closeModal() {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        pendingForm = null;
+    }
+
+    document.querySelectorAll(".js-danger-form").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            pendingForm = form;
+
+            const trigger = event.submitter || form.querySelector("button[type='submit']");
+            modalTitle.textContent = trigger.dataset.confirmTitle || "Confirm action";
+            modalMessage.textContent = trigger.dataset.confirmMessage || "This action cannot be undone.";
+            modalSubmit.textContent = trigger.dataset.confirmAction || "Confirm";
+
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        });
+    });
+
+    modalCancel.addEventListener("click", closeModal);
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    modalSubmit.addEventListener("click", () => {
+        if (pendingForm) {
+            pendingForm.submit();
+        }
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !modal.classList.contains("hidden")) {
+            closeModal();
+        }
+    });
+</script>
 {% endblock %}

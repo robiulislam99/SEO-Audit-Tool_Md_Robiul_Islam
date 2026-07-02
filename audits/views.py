@@ -1,25 +1,20 @@
 import json
 
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
-from django.views.decorators.http import require_http_methods
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.views.decorators.http import require_http_methods, require_POST
 from django_q.tasks import async_task
 from django.db.models import F
+from weasyprint import HTML
 
 from .forms import AuditSubmitForm
 from .models import Audit, AuditResult
 from .tasks import run_audit
 
 
-@require_http_methods(["GET"])
-def loading(request, audit_id):
-    audit = get_object_or_404(Audit, id=audit_id)
-    return render(request, "audits/loading.html", {"audit": audit})
-
-
-@require_http_methods(["GET"])
-def report(request, audit_id):
-    audit = get_object_or_404(Audit, id=audit_id)
+def _build_report_context(audit):
     results = audit.results.all()
     report_data = audit.full_report or {}
     frontend_report = report_data.get("frontend_friendly") or {
@@ -36,17 +31,69 @@ def report(request, audit_id):
         "issue_groups": {},
         "suggestions": report_data.get("suggestions", []),
     }
-    return render(
-        request,
-        "audits/report.html",
+
+    return {
+        "audit": audit,
+        "results": results,
+        "passed_results": results.filter(passed=True),
+        "failed_results": results.filter(passed=False),
+        "report": frontend_report,
+    }
+
+
+def _score_label(score):
+    score = score or 0
+    if score >= 80:
+        return "Strong"
+    if score >= 50:
+        return "Needs improvement"
+    return "Poor"
+
+
+@require_http_methods(["GET"])
+def loading(request, audit_id):
+    audit = get_object_or_404(Audit, id=audit_id)
+    return render(request, "audits/loading.html", {"audit": audit})
+
+
+@require_http_methods(["GET"])
+def report(request, audit_id):
+    audit = get_object_or_404(Audit, id=audit_id)
+    return render(request, "audits/report.html", _build_report_context(audit))
+
+
+@require_http_methods(["GET"])
+def report_pdf(request, audit_id):
+    audit = get_object_or_404(Audit, id=audit_id)
+
+    if audit.status != Audit.Status.COMPLETED:
+        return HttpResponse("PDF is only available for completed audits.", status=409)
+
+    context = _build_report_context(audit)
+    report_data = audit.full_report or {}
+    context.update(
         {
-            "audit": audit,
-            "results": results,
-            "passed_results": results.filter(passed=True),
-            "failed_results": results.filter(passed=False),
-            "report": frontend_report,
-        },
+            "score_label": _score_label(audit.score),
+            "category_scores": report_data.get("category_scores", {}),
+            "issue_groups": report_data.get("issue_groups", {}),
+            "suggestions": report_data.get("suggestions", []),
+            "content_quality": report_data.get("content_quality", {}),
+            "link_analysis": report_data.get("link_analysis", {}),
+            "image_optimization": report_data.get("image_optimization", {}),
+            "mobile_friendliness": report_data.get("mobile_friendliness", {}),
+            "security": report_data.get("security", {}),
+            "performance": report_data.get("performance", {}),
+            "checks": report_data.get("checks", []),
+            "report_url": request.build_absolute_uri(reverse("audits:report", args=[audit.id])),
+        }
     )
+
+    html = render_to_string("audits/report_pdf.html", context, request=request)
+    pdf = HTML(string=html, base_url=request.build_absolute_uri("/")).write_pdf()
+
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="seo-audit-{audit.id}.pdf"'
+    return response
 
 
 @require_http_methods(["GET"])
@@ -66,6 +113,19 @@ def history(request):
             "sort": sort,
         },
     )
+
+
+@require_POST
+def delete_audit(request, audit_id):
+    audit = get_object_or_404(Audit, id=audit_id)
+    audit.delete()
+    return redirect("audits:history")
+
+
+@require_POST
+def clear_history(request):
+    Audit.objects.all().delete()
+    return redirect("audits:history")
 
 
 @require_http_methods(["GET"])
