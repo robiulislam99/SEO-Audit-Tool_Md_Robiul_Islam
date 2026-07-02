@@ -6,7 +6,7 @@ the scraper, the analyzer, and the database models together.
 """
 
 from scraper.playwright_scraper import scrape_page, PageScrapeError
-from scraper.checks import analyze_seo
+from scraper.scoring import build_seo_report
 from .models import Audit, AuditResult
 
 
@@ -24,31 +24,34 @@ def run_audit(audit_id: int, target_keyword: str = None):
     audit.save(update_fields=["status"])
 
     try:
-        page_data = scrape_page(audit.url)
-        analysis = analyze_seo(page_data, target_keyword=target_keyword)
+        page_data = scrape_page(audit.url, check_mobile_rendering=True)
+        report = build_seo_report(
+            page_data,
+            target_keyword=target_keyword,
+            should_check_broken_links=True,
+            max_links_to_check=20,
+        )
 
-        # Save each check as its own AuditResult row
-        result_objects = []
-        for check in analysis["results"]:
-            if check.get("skipped"):
-                continue
-            result_objects.append(
-                AuditResult(
-                    audit=audit,
-                    check_name=check["check_name"],
-                    category=check["category"],
-                    passed=check["passed"],
-                    severity=(
-                        AuditResult.Severity.PASS_
-                        if check["passed"]
-                        else AuditResult.Severity.FAIL
-                    ),
-                    message=check["message"],
-                )
+        result_objects = [
+            AuditResult(
+                audit=audit,
+                check_name=check["check_name"],
+                category=check["category"],
+                passed=check["passed"],
+                severity=check["severity"],
+                message=check["message"],
+                affected_element=check.get("affected_element"),
+                recommendation=check.get("recommendation"),
             )
+            for check in report["checks"]
+        ]
         AuditResult.objects.bulk_create(result_objects)
 
-        audit.mark_completed(score=analysis["score"])
+        audit.full_report = report
+        audit.technical_seo_score = report["category_scores"]["technical_seo"]["score"]
+        audit.content_seo_score = report["category_scores"]["content_seo"]["score"]
+        audit.performance_score = report["category_scores"]["performance"]["score"]
+        audit.mark_completed(score=report["overall_score"])
 
     except PageScrapeError as e:
         audit.mark_failed(e.message, error_type=e.error_type)

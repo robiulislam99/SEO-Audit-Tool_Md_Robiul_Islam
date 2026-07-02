@@ -8,7 +8,7 @@ class AuditSubmitForm(forms.Form):
         label="Website URL",
         widget=forms.URLInput(attrs={
             "placeholder": "https://example.com",
-            "class": "w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500",
+            "class": "w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15",
         }),
     )
     target_keyword = forms.CharField(
@@ -16,6 +16,6 @@ class AuditSubmitForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={
             "placeholder": "e.g. seo audit tool",
-            "class": "w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500",
+            "class": "w-full rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/15",
         }),
     )

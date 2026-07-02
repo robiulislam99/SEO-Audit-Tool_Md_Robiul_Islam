@@ -36,6 +36,34 @@ class Audit(models.Model):
         help_text="Overall SEO score out of 100 (null until audit completes)"
     )
 
+
+    full_report = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Complete structured report from scraper.scoring.build_seo_report() "
+                   "— keyword analysis, content quality, link analysis, mobile, "
+                   "security, and performance data, all in one place."
+    )
+ 
+    technical_seo_score = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Technical SEO category score (0-100)"
+    )
+ 
+    content_seo_score = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Content SEO category score (0-100)"
+    )
+ 
+    performance_score = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Performance category score (0-100)"
+    )
+
+
     error_message = models.TextField(
         null=True,
         blank=True,
