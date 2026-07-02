@@ -1,5 +1,6 @@
 <!-- audits/templates/audits/loading.html -->
 {% extends "core/base.html" %}
+{% load static %}
 
 {% block content %}
 <div class="mx-auto max-w-3xl">
@@ -14,26 +15,10 @@
     </div>
 </div>
 
+{% block extra_scripts %}
 <script>
-    const auditId = "{{ audit.id }}";
-    const statusUrl = "{% url 'audits:status' audit.id %}";
-
-    async function pollStatus() {
-        const res = await fetch(statusUrl);
-        const data = await res.json();
-
-        document.getElementById("status-text").textContent = `Status: ${data.status}...`;
-
-        if (data.status === "completed") {
-            window.location.href = data.redirect_url;
-        } else if (data.status === "failed") {
-            document.getElementById("status-text").textContent =
-                `Audit failed: ${data.error_message}`;
-        } else {
-            setTimeout(pollStatus, 2000);
-        }
-    }
-
-    pollStatus();
+    window.AUDIT_STATUS_URL = "{% url 'audits:status' audit.id %}";
 </script>
+<script src="{% static 'js/loading.js' %}" defer></script>
+{% endblock %}
 {% endblock %}
