@@ -7,35 +7,158 @@
         <span aria-hidden="true">&larr;</span>
         <span>Run another audit</span>
     </a>
+    <a href="{% url 'audits:history' %}" class="ml-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-teal-800">
+        <span aria-hidden="true">↩</span>
+        <span>Back to history</span>
+    </a>
 </div>
 
-<div class="glass-panel rounded-[2rem] p-6 sm:p-8 mb-8 text-center">
-    <div class="mx-auto flex max-w-3xl flex-col items-center gap-5">
-        <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">Audit complete</div>
-        <div>
-            <p class="break-all text-sm font-medium text-slate-500">{{ audit.url }}</p>
-            <h1 class="section-title mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Your SEO score is ready.</h1>
+<div class="glass-panel rounded-[2rem] p-6 sm:p-8 mb-8">
+    <div class="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-teal-700">
+                Audit complete
+            </div>
+            <h1 class="section-title mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">{{ report.title|default:"SEO Audit Report" }}</h1>
+            <p class="mt-3 break-all text-sm font-medium text-slate-500">{{ report.url|default:audit.url }}</p>
+            <p class="mt-4 max-w-2xl text-sm leading-6 text-slate-600">
+                A structured summary of your SEO health with clear priorities for meta, content, and performance improvements.
+            </p>
         </div>
 
-        <div id="score-circle" class="mx-auto flex h-36 w-36 items-center justify-center rounded-full border-8 bg-white" data-score="{{ audit.score }}">
-            <span class="text-5xl font-bold" id="score-number">{{ audit.score }}</span>
-        </div>
-
-        <div>
-            <p class="text-lg font-semibold" id="score-label"></p>
-            <p class="mt-1 text-sm text-slate-500">Audited on {{ audit.completed_at|date:"M d, Y — H:i" }}</p>
+        <div class="flex flex-col items-start gap-4 lg:items-end">
+            <div id="score-circle" class="flex h-36 w-36 items-center justify-center rounded-full border-8 bg-white" data-score="{{ report.summary.overall_score|default:audit.score|default:0 }}">
+                <span class="text-5xl font-bold" id="score-number">{{ report.summary.overall_score|default:audit.score|default:0 }}</span>
+            </div>
+            <div class="text-left lg:text-right">
+                <p class="text-lg font-semibold" id="score-label"></p>
+                <p class="mt-1 text-sm text-slate-500">Completed {{ report.summary.completed_at|default:audit.completed_at|date:"M d, Y — H:i" }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ report.summary.issue_count|default:failed_results.count }} issues requiring attention</p>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-8">
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
     <div class="glass-panel rounded-3xl p-5 text-center">
-        <p class="text-2xl font-bold text-emerald-700">{{ passed_results.count }}</p>
-        <p class="text-sm text-slate-600">Checks passed</p>
+        <p class="text-2xl font-bold text-slate-900">{{ report.summary.overall_score|default:audit.score|default:0 }}</p>
+        <p class="text-sm text-slate-600">Overall score</p>
+    </div>
+    {% for card in report.cards %}
+    <div class="glass-panel rounded-3xl p-5 text-center">
+        <p class="text-2xl font-bold text-slate-900">{{ card.value }}</p>
+        <p class="text-sm text-slate-600">{{ card.title }}</p>
+    </div>
+    {% empty %}
+    <div class="glass-panel rounded-3xl p-5 text-center">
+        <p class="text-2xl font-bold text-slate-900">{{ audit.technical_seo_score|default:0 }}</p>
+        <p class="text-sm text-slate-600">Meta</p>
     </div>
     <div class="glass-panel rounded-3xl p-5 text-center">
-        <p class="text-2xl font-bold text-rose-700">{{ failed_results.count }}</p>
-        <p class="text-sm text-slate-600">Checks failed</p>
+        <p class="text-2xl font-bold text-slate-900">{{ audit.content_seo_score|default:0 }}</p>
+        <p class="text-sm text-slate-600">Content</p>
+    </div>
+    <div class="glass-panel rounded-3xl p-5 text-center">
+        <p class="text-2xl font-bold text-slate-900">{{ audit.performance_score|default:0 }}</p>
+        <p class="text-sm text-slate-600">Performance</p>
+    </div>
+    <div class="glass-panel rounded-3xl p-5 text-center">
+        <p class="text-2xl font-bold text-slate-900">{{ failed_results.count }}</p>
+        <p class="text-sm text-slate-600">Issues</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-3 mb-8">
+    {% for section in report.sections %}
+    <div class="glass-panel rounded-[2rem] p-5">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{{ section.title }}</h2>
+                <p class="mt-2 text-3xl font-bold text-slate-900">{{ section.score }}</p>
+            </div>
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-600">{{ section.checks|length }} checks</span>
+        </div>
+
+        <div class="mt-5 space-y-3 text-sm text-slate-600">
+            <p><span class="font-semibold text-slate-900">Issues found:</span> {{ section.issues|length }}</p>
+            {% if section.issues %}
+                <div class="space-y-2">
+                    {% for issue in section.issues|slice:":3" %}
+                        <div class="rounded-2xl bg-white/80 px-4 py-3">
+                            <p class="font-medium text-slate-900">{{ issue.check_name|title }}</p>
+                            <p class="mt-1 text-sm text-slate-600">{{ issue.message }}</p>
+                            {% if issue.recommendation %}
+                                <p class="mt-2 text-sm font-medium text-teal-700">{{ issue.recommendation }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-800">No issues found in this section.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="glass-panel rounded-[2rem] p-5 lg:col-span-3">
+        <p class="text-sm text-slate-500">Section summaries will appear here after the audit report is generated.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mb-8">
+    <div class="glass-panel rounded-[2rem] p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Issues found</h2>
+        <div class="mt-4 space-y-3">
+            {% for issue in report.issue_groups.meta %}
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                    <p class="text-sm font-semibold text-slate-900">Meta · {{ issue.check_name|title }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ issue.message }}</p>
+                    {% if issue.recommendation %}
+                        <p class="mt-2 text-sm font-medium text-teal-700">{{ issue.recommendation }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {% for issue in report.issue_groups.content %}
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                    <p class="text-sm font-semibold text-slate-900">Content · {{ issue.check_name|title }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ issue.message }}</p>
+                    {% if issue.recommendation %}
+                        <p class="mt-2 text-sm font-medium text-teal-700">{{ issue.recommendation }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            {% for issue in report.issue_groups.performance %}
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                    <p class="text-sm font-semibold text-slate-900">Performance · {{ issue.check_name|title }}</p>
+                    <p class="mt-1 text-sm text-slate-600">{{ issue.message }}</p>
+                    {% if issue.recommendation %}
+                        <p class="mt-2 text-sm font-medium text-teal-700">{{ issue.recommendation }}</p>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p class="text-sm text-slate-500">No issues were reported.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="glass-panel rounded-[2rem] p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Actionable suggestions</h2>
+        {% if report.suggestions %}
+            <div class="mt-4 space-y-3">
+                {% for suggestion in report.suggestions %}
+                    <div class="rounded-2xl bg-white/80 px-4 py-3">
+                        <p class="text-sm font-semibold text-slate-900">{{ suggestion.check_name|title }}</p>
+                        <p class="mt-1 text-sm text-slate-600">{{ suggestion.message }}</p>
+                        {% if suggestion.recommendation %}
+                            <p class="mt-2 text-sm font-medium text-teal-700">{{ suggestion.recommendation }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="mt-4 text-sm text-slate-500">No additional suggestions available.</p>
+        {% endif %}
     </div>
 </div>
 
@@ -64,10 +187,9 @@
 </div>
 
 <script>
-    // Color the score circle and label based on the numeric score
     const circle = document.getElementById("score-circle");
     const label = document.getElementById("score-label");
-    const score = parseInt(circle.dataset.score, 10);
+    const score = parseInt(circle.dataset.score, 10) || 0;
 
     let colorClasses, labelText, textColor;
 

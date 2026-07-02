@@ -1,0 +1,49 @@
+<!-- audits/templates/audits/history.html -->
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.22em] text-teal-700">Scan history</p>
+        <h1 class="section-title mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Past audited URLs</h1>
+        <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Review previous scans, reopen reports, and sort the archive by the newest audit or the best score.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+        <a href="?sort=date" class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if sort == 'date' %}border-teal-200 bg-teal-50 text-teal-700{% else %}border-slate-200 bg-white/80 text-slate-600 hover:border-teal-200 hover:text-teal-700{% endif %}">Newest first</a>
+        <a href="?sort=score" class="rounded-full border px-4 py-2 text-sm font-semibold transition {% if sort == 'score' %}border-teal-200 bg-teal-50 text-teal-700{% else %}border-slate-200 bg-white/80 text-slate-600 hover:border-teal-200 hover:text-teal-700{% endif %}">Highest score</a>
+    </div>
+</div>
+
+<div class="space-y-4">
+    {% for audit in audits %}
+    <article class="glass-panel rounded-[2rem] p-5 sm:p-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-lg font-semibold text-slate-900 break-all">{{ audit.url }}</h2>
+                    <span class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] {% if audit.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif audit.status == 'failed' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ audit.status }}</span>
+                </div>
+                <p class="mt-2 text-sm text-slate-500">Scanned {{ audit.created_at|date:"M d, Y \a\t H:i" }}{% if audit.completed_at %} · Completed {{ audit.completed_at|date:"M d, Y \a\t H:i" }}{% endif %}</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-center min-w-24">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Score</p>
+                    <p class="mt-1 text-2xl font-bold text-slate-900">{{ audit.score|default:"—" }}</p>
+                </div>
+                {% if audit.status == 'completed' %}
+                    <a href="{% url 'audits:history_report' audit.id %}" class="inline-flex items-center justify-center rounded-2xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-teal-800">View report</a>
+                {% else %}
+                    <span class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white/70 px-5 py-3 text-sm font-semibold text-slate-400">Report unavailable</span>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+    {% empty %}
+    <div class="glass-panel rounded-[2rem] p-8 text-center text-sm text-slate-500">
+        No audits have been run yet.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
