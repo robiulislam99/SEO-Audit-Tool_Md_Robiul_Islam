@@ -10,7 +10,7 @@ from django.db.models import F
 from weasyprint import HTML
 
 from .forms import AuditSubmitForm
-from .models import Audit, AuditResult
+from .models import Audit
 from .tasks import run_audit
 
 

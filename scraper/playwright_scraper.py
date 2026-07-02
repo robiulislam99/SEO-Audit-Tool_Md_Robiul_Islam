@@ -44,7 +44,7 @@ class PageScrapeError(Exception):
 MOBILE_VIEWPORT = {"width": 390, "height": 844}  # iPhone 12-ish width
 
 
-def _extract_page_data(page, response, url):
+def _extract_page_data(page, response):
     """Runs all the DOM/network extraction for a single loaded page. Shared by
     the main desktop pass; kept as its own function so it's easy to test/read."""
 
@@ -311,7 +311,7 @@ def scrape_page(url: str, timeout: int = 15000, headless: bool = True,
                     error_type="connection_refused"
                 )
 
-            extracted = _extract_page_data(page, response, url)
+            extracted = _extract_page_data(page, response)
             result.update(extracted)
             result["request_count"] = request_count if request_count > 0 else None
 
